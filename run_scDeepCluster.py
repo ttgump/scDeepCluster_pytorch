@@ -156,6 +156,6 @@ if __name__ == "__main__":
         print('Evaluating cells: NMI= %.4f, ARI= %.4f' % (nmi, ari))
 
     final_latent = model.encodeBatch(torch.tensor(adata.X).to(args.device)).cpu().numpy()
-    np.savetxt(args.final_latent_file, y_pred, delimiter=",")
+    np.savetxt(args.final_latent_file, final_latent, delimiter=",")
     np.savetxt(args.predict_label_file, y_pred, delimiter=",", fmt="%i")
 
