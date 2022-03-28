@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from scDeepCluster import scDeepCluster
 from single_cell_tools import *
 import numpy as np
-import collections
 from sklearn import metrics
 import h5py
 import scanpy as sc
