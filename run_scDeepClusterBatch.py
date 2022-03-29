@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('--select_genes', default=0, type=int, 
                         help='number of selected genes, 0 means using all genes')
     parser.add_argument('--batch_size', default=256, type=int)
-    parser.add_argument('--data_file', default='SLN_RNASeq.h5')
+    parser.add_argument('--data_file', default='data.h5')
     parser.add_argument('--maxiter', default=2000, type=int)
     parser.add_argument('--pretrain_epochs', default=300, type=int)
     parser.add_argument('--gamma', default=1., type=float,
