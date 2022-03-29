@@ -9,10 +9,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from scDeepCluster import scDeepCluster
+from scDeepClusterBatch import scDeepClusterBatch
 from single_cell_tools import *
 import numpy as np
-import collections
 from sklearn import metrics
 import h5py
 import scanpy as sc
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('--select_genes', default=0, type=int, 
                         help='number of selected genes, 0 means using all genes')
     parser.add_argument('--batch_size', default=256, type=int)
-    parser.add_argument('--data_file', default='10X_PBMC.h5')
+    parser.add_argument('--data_file', default='SLN_RNASeq.h5')
     parser.add_argument('--maxiter', default=2000, type=int)
     parser.add_argument('--pretrain_epochs', default=300, type=int)
     parser.add_argument('--gamma', default=1., type=float,
@@ -63,6 +62,7 @@ if __name__ == "__main__":
 
     data_mat = h5py.File(args.data_file, 'r')
     x = np.array(data_mat['X'])
+    b = np.array(data_mat['B'])
     # y is the ground truth labels for evaluating clustering performance
     # If not existing, we skip calculating the clustering performance metrics (e.g. NMI ARI)
     if 'Y' in data_mat:
@@ -91,6 +91,7 @@ if __name__ == "__main__":
                       logtrans_input=True)
 
     input_size = adata.n_vars
+    n_batch = b.shape[1]
 
     print(args)
 
@@ -103,14 +104,14 @@ if __name__ == "__main__":
 #    print("median of gene sd: %.5f" % x_sd_median)
 
 
-    model = scDeepCluster(input_dim=adata.n_vars, z_dim=32, 
+    model = scDeepClusterBatch(input_dim=adata.n_vars, n_batch=n_batch, z_dim=32, 
                 encodeLayer=[256, 64], decodeLayer=[64, 256], sigma=args.sigma, gamma=args.gamma, device=args.device)
     
     print(str(model))
 
     t0 = time()
     if args.ae_weights is None:
-        model.pretrain_autoencoder(X=adata.X, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, 
+        model.pretrain_autoencoder(X=adata.X, B=b, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, 
                                 batch_size=args.batch_size, epochs=args.pretrain_epochs, ae_weights=args.ae_weight_file)
     else:
         if os.path.isfile(args.ae_weights):
@@ -127,11 +128,11 @@ if __name__ == "__main__":
             os.makedirs(args.save_dir)
 
     if args.n_clusters > 0:
-        y_pred, _, _, _, _ = model.fit(X=adata.X, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, n_clusters=args.n_clusters, init_centroid=None, 
+        y_pred, _, _, _, _ = model.fit(X=adata.X, B=b, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, n_clusters=args.n_clusters, init_centroid=None, 
                     y_pred_init=None, y=y, batch_size=args.batch_size, num_epochs=args.maxiter, update_interval=args.update_interval, tol=args.tol, save_dir=args.save_dir)
     else:
         ### estimate number of clusters by Louvain algorithm on the autoencoder latent representations
-        pretrain_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32)).cpu().numpy()
+        pretrain_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32), torch.tensor(b, dtype=torch.float32)).cpu().numpy()
         adata_latent = sc.AnnData(pretrain_latent)
         sc.pp.neighbors(adata_latent, n_neighbors=args.knn, use_rep="X")
         sc.tl.louvain(adata_latent, resolution=args.resolution)
@@ -142,7 +143,7 @@ if __name__ == "__main__":
         cluster_centers = np.asarray(Mergefeature.groupby("Group").mean())
         n_clusters = cluster_centers.shape[0]
         print('Estimated number of clusters: ', n_clusters)
-        y_pred, _, _, _, _ = model.fit(X=adata.X, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, n_clusters=n_clusters, init_centroid=cluster_centers, 
+        y_pred, _, _, _, _ = model.fit(X=adata.X, B=b, X_raw=adata.raw.X, size_factor=adata.obs.size_factors, n_clusters=n_clusters, init_centroid=cluster_centers, 
                     y_pred_init=y_pred_init, y=y, batch_size=args.batch_size, num_epochs=args.maxiter, update_interval=args.update_interval, tol=args.tol, save_dir=args.save_dir)
 
 
@@ -155,7 +156,6 @@ if __name__ == "__main__":
         ari = np.round(metrics.adjusted_rand_score(y, y_pred), 5)
         print('Evaluating cells: NMI= %.4f, ARI= %.4f' % (nmi, ari))
 
-    final_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32)).cpu().numpy()
+    final_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32), torch.tensor(b, dtype=torch.float32)).cpu().numpy()
     np.savetxt(args.final_latent_file, final_latent, delimiter=",")
     np.savetxt(args.predict_label_file, y_pred, delimiter=",", fmt="%i")
-

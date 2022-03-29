@@ -22,21 +22,19 @@ def buildNetwork(layers, type, activation="relu"):
             net.append(nn.Sigmoid())
     return nn.Sequential(*net)
 
-def euclidean_dist(x, y):
-    return torch.sum(torch.square(x - y), dim=1)
-
-class scDeepCluster(nn.Module):
-    def __init__(self, input_dim, z_dim, encodeLayer=[], decodeLayer=[], 
+class scDeepClusterBatch(nn.Module):
+    def __init__(self, input_dim, n_batch, z_dim, encodeLayer=[], decodeLayer=[], 
             activation="relu", sigma=1., alpha=1., gamma=1., device="cuda"):
-        super(scDeepCluster, self).__init__()
+        super(scDeepClusterBatch, self).__init__()
         self.z_dim = z_dim
+        self.n_batch = n_batch
         self.activation = activation
         self.sigma = sigma
         self.alpha = alpha
         self.gamma = gamma
         self.device = device
-        self.encoder = buildNetwork([input_dim]+encodeLayer, type="encode", activation=activation)
-        self.decoder = buildNetwork([z_dim]+decodeLayer, type="decode", activation=activation)
+        self.encoder = buildNetwork([input_dim+n_batch]+encodeLayer, type="encode", activation=activation)
+        self.decoder = buildNetwork([z_dim+n_batch]+decodeLayer, type="decode", activation=activation)
         self._enc_mu = nn.Linear(encodeLayer[-1], z_dim)
         self._dec_mean = nn.Sequential(nn.Linear(decodeLayer[-1], input_dim), MeanAct())
         self._dec_disp = nn.Sequential(nn.Linear(decodeLayer[-1], input_dim), DispAct())
@@ -65,40 +63,42 @@ class scDeepCluster(nn.Module):
         p = q**2 / q.sum(0)
         return (p.t() / p.sum(1)).t()
 
-    def forwardAE(self, x):
-        h = self.encoder(x+torch.randn_like(x) * self.sigma)
+    def forwardAE(self, x, b):
+        h = self.encoder(torch.cat([x+torch.randn_like(x) * self.sigma, b], dim=-1))
         z = self._enc_mu(h)
-        h = self.decoder(z)
+        h = self.decoder(torch.cat([z, b], dim=-1))
         _mean = self._dec_mean(h)
         _disp = self._dec_disp(h)
         _pi = self._dec_pi(h)
 
-        h0 = self.encoder(x)
+        h0 = self.encoder(torch.cat([x, b], dim=-1))
         z0 = self._enc_mu(h0)
         return z0, _mean, _disp, _pi
 
-    def forward(self, x):
-        h = self.encoder(x+torch.randn_like(x) * self.sigma)
+    def forward(self, x, b):
+        h = self.encoder(torch.cat([x+torch.randn_like(x) * self.sigma, b], dim=-1))
         z = self._enc_mu(h)
-        h = self.decoder(z)
+        h = self.decoder(torch.cat([z, b], dim=-1))
         _mean = self._dec_mean(h)
         _disp = self._dec_disp(h)
         _pi = self._dec_pi(h)
 
-        h0 = self.encoder(x)
+        h0 = self.encoder(torch.cat([x, b], dim=-1))
         z0 = self._enc_mu(h0)
         q = self.soft_assign(z0)
         return z0, q, _mean, _disp, _pi
 
-    def encodeBatch(self, X, batch_size=256):
+    def encodeBatch(self, X, B, batch_size=256):
         self.eval()
         encoded = []
         num = X.shape[0]
         num_batch = int(math.ceil(1.0*X.shape[0]/batch_size))
         for batch_idx in range(num_batch):
             xbatch = X[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
+            bbatch = B[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
             inputs = Variable(xbatch).to(self.device)
-            z, _, _, _= self.forwardAE(inputs)
+            binputs = Variable(bbatch).to(self.device)
+            z, _, _, _= self.forwardAE(inputs, binputs)
             encoded.append(z.data)
 
         encoded = torch.cat(encoded, dim=0)
@@ -110,19 +110,20 @@ class scDeepCluster(nn.Module):
         kldloss = kld(p, q)
         return self.gamma*kldloss
 
-    def pretrain_autoencoder(self, X, X_raw, size_factor, batch_size=256, lr=0.001, epochs=400, ae_save=True, ae_weights='AE_weights.pth.tar'):
+    def pretrain_autoencoder(self, X, B, X_raw, size_factor, batch_size=256, lr=0.001, epochs=400, ae_save=True, ae_weights='AE_weights.pth.tar'):
         self.train()
-        dataset = TensorDataset(torch.Tensor(X), torch.Tensor(X_raw), torch.Tensor(size_factor))
+        dataset = TensorDataset(torch.Tensor(X), torch.Tensor(B), torch.Tensor(X_raw), torch.Tensor(size_factor))
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         print("Pretraining stage")
         optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=lr, amsgrad=True)
         for epoch in range(epochs):
             loss_val = 0
-            for batch_idx, (x_batch, x_raw_batch, sf_batch) in enumerate(dataloader):
+            for batch_idx, (x_batch, b_batch, x_raw_batch, sf_batch) in enumerate(dataloader):
                 x_tensor = Variable(x_batch).to(self.device)
+                b_tensor = Variable(b_batch).to(self.device)
                 x_raw_tensor = Variable(x_raw_batch).to(self.device)
                 sf_tensor = Variable(sf_batch).to(self.device)
-                _, mean_tensor, disp_tensor, pi_tensor = self.forwardAE(x_tensor)
+                _, mean_tensor, disp_tensor, pi_tensor = self.forwardAE(x_tensor, b_tensor)
                 loss = self.zinb_loss(x=x_raw_tensor, mean=mean_tensor, disp=disp_tensor, pi=pi_tensor, scale_factor=sf_tensor)
                 optimizer.zero_grad()
                 loss.backward()
@@ -138,12 +139,13 @@ class scDeepCluster(nn.Module):
         newfilename = os.path.join(filename, 'FTcheckpoint_%d.pth.tar' % index)
         torch.save(state, newfilename)
 
-    def fit(self, X, X_raw, size_factor, n_clusters, init_centroid=None, y=None, y_pred_init=None, lr=1., batch_size=256, 
+    def fit(self, X, B, X_raw, size_factor, n_clusters, init_centroid=None, y=None, y_pred_init=None, lr=1., batch_size=256, 
             num_epochs=10, update_interval=1, tol=1e-3, save_dir=""):
         '''X: tensor data'''
         self.train()
         print("Clustering stage")
         X = torch.tensor(X, dtype=torch.float32)
+        B = torch.tensor(B, dtype=torch.float32)
         X_raw = torch.tensor(X_raw, dtype=torch.float32)
         size_factor = torch.tensor(size_factor, dtype=torch.float32)
         self.mu = Parameter(torch.Tensor(n_clusters, self.z_dim).to(self.device))
@@ -152,7 +154,7 @@ class scDeepCluster(nn.Module):
         print("Initializing cluster centers with kmeans.")
         if init_centroid is None:
             kmeans = KMeans(n_clusters, n_init=20)
-            data = self.encodeBatch(X)
+            data = self.encodeBatch(X, B)
             self.y_pred = kmeans.fit_predict(data.data.cpu().numpy())
             self.y_pred_last = self.y_pred
             self.mu.data.copy_(torch.tensor(kmeans.cluster_centers_, dtype=torch.float32))
@@ -175,7 +177,7 @@ class scDeepCluster(nn.Module):
         for epoch in range(num_epochs):
             if epoch%update_interval == 0:
                 # update the targe distribution p
-                latent = self.encodeBatch(X.to(self.device))
+                latent = self.encodeBatch(X, B)
                 q = self.soft_assign(latent)
                 p = self.target_distribution(q).data
 
@@ -213,16 +215,18 @@ class scDeepCluster(nn.Module):
             cluster_loss_val = 0.0
             for batch_idx in range(num_batch):
                 xbatch = X[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
+                bbatch = B[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
                 xrawbatch = X_raw[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
                 sfbatch = size_factor[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
                 pbatch = p[batch_idx*batch_size : min((batch_idx+1)*batch_size, num)]
                 optimizer.zero_grad()
                 inputs = Variable(xbatch).to(self.device)
+                binputs = Variable(bbatch).to(self.device)
                 rawinputs = Variable(xrawbatch).to(self.device)
                 sfinputs = Variable(sfbatch).to(self.device)
                 target = Variable(pbatch).to(self.device)
 
-                zbatch, qbatch, meanbatch, dispbatch, pibatch = self.forward(inputs)
+                zbatch, qbatch, meanbatch, dispbatch, pibatch = self.forward(inputs, binputs)
 
                 cluster_loss = self.cluster_loss(target, qbatch)
                 recon_loss = self.zinb_loss(rawinputs, meanbatch, dispbatch, pibatch, sfinputs)
@@ -238,4 +242,3 @@ class scDeepCluster(nn.Module):
                 epoch + 1, train_loss / num, cluster_loss_val / num, recon_loss_val / num))
 
         return self.y_pred, final_acc, final_nmi, final_ari, final_epoch
-
