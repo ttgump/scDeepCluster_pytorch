@@ -22,9 +22,6 @@ def buildNetwork(layers, type, activation="relu"):
             net.append(nn.Sigmoid())
     return nn.Sequential(*net)
 
-def euclidean_dist(x, y):
-    return torch.sum(torch.square(x - y), dim=1)
-
 class scDeepCluster(nn.Module):
     def __init__(self, input_dim, z_dim, encodeLayer=[], decodeLayer=[], 
             activation="relu", sigma=1., alpha=1., gamma=1., device="cuda"):
