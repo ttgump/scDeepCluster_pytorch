@@ -3,8 +3,6 @@
 
 scDeepCluster, a model-based deep embedded clustering for Single Cell RNA-seq data. 
 
-![](https://github.com/ttgump/scDeepCluster_pytorch/asset/network.pdf)
-
 **Reference:**
 
 Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq data with a model-based deep learning approach. Nature Machine Intelligence, 1(4), 191-198. https://www.nature.com/articles/s42256-019-0037-0.
