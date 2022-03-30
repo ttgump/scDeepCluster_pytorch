@@ -1,7 +1,7 @@
 # scDeepCluster_pytorch
 
 
-scDeepCluster, a model-based deep embedded clustering for Single Cell RNA-seq data. 
+scDeepCluster, a model-based deep embedding clustering for Single Cell RNA-seq data. 
 
 **Reference:**
 
