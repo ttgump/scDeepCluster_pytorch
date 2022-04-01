@@ -37,3 +37,5 @@ This is the script for clustering analysis of datasets with batches (stored in h
 --sigma: coefficient of the random Gaussian noise, default = 2.5.<br/>
 --update_interval: number of iteration to update clustering targets, default = 1.<br/>
 --tol: tolerance to terminate the clustering stage, which is the delta of predicted labels between two consecutive iterations, default = 0.001.<br/>
+--final_latent_file: file name to output final latent representations of the autoencoder, default = final_latent_file.txt.<br/>
+--predict_label_file: file name to output clustering labels, default = pred_labels.txt.<br/>
