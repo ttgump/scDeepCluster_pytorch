@@ -52,4 +52,4 @@ This is the script for clustering analysis of datasets with batches (stored in h
 
 **Online app**
 
-Online app website: https://app.superbio.ai
+Online app website: https://app.superbio.ai/apps/107?id=62712ec148139943a4273ae1
