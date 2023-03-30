@@ -11,9 +11,9 @@ Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq da
 
 **Requirements:**
 
-Scanpy -- 1.7
+Scanpy -- 1.7 (https://scanpy.readthedocs.io/en/stable/)
 
-Pytorch -- 1.8
+Pytorch -- 1.8 (https://pytorch.org)
 
 **Usage:**
 
