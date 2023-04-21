@@ -1,21 +1,27 @@
 # scDeepCluster_pytorch
 
 
-scDeepCluster, a model-based deep embedding clustering for Single Cell RNA-seq data. 
+The pytorch version of scDeepCluster, a model-based deep embedding clustering for Single Cell RNA-seq data. 
 
+## Table of contents
+- [Network diagram](#diagram)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Parameters](#parameters)
+- [Reference](#reference)
+- [Online app](#app)
+- [Contact](#contact)
+
+## <a name="diagram"></a>Network diagram
 ![alt text](https://github.com/ttgump/scDeepCluster_pytorch/blob/main/network.png?raw=True)
 
-**Reference:**
-
-Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq data with a model-based deep learning approach. Nature Machine Intelligence, 1(4), 191-198. https://www.nature.com/articles/s42256-019-0037-0.
-
-**Requirements:**
+## <a name="requirements"></a>Requirements
 
 Scanpy -- 1.7 (https://scanpy.readthedocs.io/en/stable/)
 
 Pytorch -- 1.8 (https://pytorch.org)
 
-**Usage:**
+## <a name="usage"></a>Usage
 
 For single-cell count data:
 
@@ -33,7 +39,7 @@ python run_scDeepClusterBatch.py --data_file data.h5 --n_clusters 0
 
 This is the script for clustering analysis of datasets with batches (stored in h5 format, with three components X, B and Y, where X is the cell by gene count matrix, B is the one-hot encoded batch IDs, and Y is the true labels. Y is optional). n_clusters to the number of clusters (0 for automatically estimating by the Louvain algorithm on the pretrained latent features).
 
-**Parameters:**
+## <a name="parameters"></a>Parameters
 
 --n_clusters: number of clusters, if setting as 0, it will be estimated by the Louvain alogrithm on the latent features.<br/>
 --knn: number of nearest neighbors, which is used in the Louvain algorithm, default = 20.<br/>
@@ -50,6 +56,14 @@ This is the script for clustering analysis of datasets with batches (stored in h
 --final_latent_file: file name to output final latent representations of the autoencoder, default = final_latent_file.txt.<br/>
 --predict_label_file: file name to output clustering labels, default = pred_labels.txt.<br/>
 
-**Online app**
+## <a name="reference"></a>Reference
+
+Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq data with a model-based deep learning approach. Nature Machine Intelligence, 1(4), 191-198. https://www.nature.com/articles/s42256-019-0037-0.
+
+## <a name="app"></a>Online app
 
 Online app website: https://app.superbio.ai/apps/107?id=62712ec148139943a4273ae1
+
+## <a name="contact"></a>Contact
+
+Tian Tian tt72@njit.edu
