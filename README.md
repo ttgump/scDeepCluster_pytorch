@@ -62,7 +62,7 @@ This is the script for clustering analysis of datasets with batches (stored in h
 
 ## <a name="reference"></a>Reference
 
-Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq data with a model-based deep learning approach. Nature Machine Intelligence, 1(4), 191-198. https://www.nature.com/articles/s42256-019-0037-0.
+Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq data with a model-based deep learning approach. *Nature Machine Intelligence*, 1(4), 191-198. https://www.nature.com/articles/s42256-019-0037-0.
 
 ## <a name="app"></a>Online app
 
