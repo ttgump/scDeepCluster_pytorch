@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # setting the hyper parameters
     import argparse
-    parser = argparse.ArgumentParser(description='train',
+    parser = argparse.ArgumentParser(description='scDeepCluster: model-based deep embedding clustering for single-cell RNA-seq data',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--n_clusters', default=0, type=int, 
                         help='number of clusters, 0 means estimating by the Louvain algorithm')
