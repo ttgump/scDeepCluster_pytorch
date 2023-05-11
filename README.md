@@ -12,6 +12,7 @@ Comparing to the original Keras version, I introduced two new features:<br/>
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Parameters](#parameters)
+- [Outputs](#outputs)
 - [Reference](#reference)
 - [Online app](#app)
 - [Contact](#contact)
@@ -59,6 +60,11 @@ This is the script for clustering analysis of datasets from different batches (s
 **--tol:** tolerance to terminate the clustering stage, which is the delta of predicted labels between two consecutive iterations, default = 0.001.<br/>
 **--final_latent_file:** file name to output final latent representations of the autoencoder, default = final_latent_file.txt.<br/>
 **--predict_label_file:** file name to output clustering labels, default = pred_labels.txt.<br/>
+
+## <a name="outputs"></a>Outputs
+
+- **final_latent:** low dimensional representations of scRNA-seq data, default shape (n_cells, 32), which can be visualized by t-SNE or UMAP.<br/>
+- **predict_label:** predicted clustering labels, shape (n_cells).<br/>
 
 ## <a name="reference"></a>Reference
 
