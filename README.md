@@ -72,7 +72,7 @@ Tian, T., Wan, J., Song, Q., & Wei, Z. (2019). Clustering single-cell RNA-seq da
 
 ## <a name="app"></a>Online app
 
-Online app website: https://app.superbio.ai/apps/107?id=62712ec148139943a4273ae1
+Online app website: https://app.superbio.ai/apps/107
 
 ## <a name="contact"></a>Contact
 
