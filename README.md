@@ -34,7 +34,7 @@ For single-cell count data:
 python run_scDeepCluster.py --data_file data.h5 --n_clusters 0
 ```
 
-Set data_file to the destination to the data (stored in h5 format, with two components X and Y, where X is the cell by gene count matrix, and Y is the true labels. Y is optional), n_clusters to the number of clusters (0 for automatically estimating by the Louvain algorithm on the pretrained latent features).
+Set data_file to the destination to the data (**stored in h5 format, with two components X and Y, where X is the cell by gene count matrix, and Y is the true labels. Y is optional**), n_clusters to the number of clusters (0 for automatically estimating by the Louvain algorithm on the pretrained latent features).
 
 For single-cell count data from multiple batches:
 
@@ -42,7 +42,7 @@ For single-cell count data from multiple batches:
 python run_scDeepClusterBatch.py --data_file data.h5 --n_clusters 0
 ```
 
-This is the script for clustering analysis of datasets from different batches (stored in h5 format, with three components X, B and Y, where X is the cell by gene count matrix, B is the one-hot encoded batch IDs, and Y is the true labels. Y is optional). Following the idea from scVI paper (https://doi.org/10.1038/s41592-018-0229-2), we use the conditional autoencoder (https://papers.nips.cc/paper_files/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html) technic to integrate different batches. n_clusters to the number of clusters (0 for automatically estimating by the Louvain algorithm on the pretrained latent features).
+This is the script for clustering analysis of datasets from different batches (**stored in h5 format, with three components X, B and Y, where X is the cell by gene count matrix, B is the one-hot encoded batch IDs, and Y is the true labels. Y is optional**). Following the idea from scVI paper (https://doi.org/10.1038/s41592-018-0229-2), we use the conditional autoencoder (https://papers.nips.cc/paper_files/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html) technic to integrate different batches. n_clusters to the number of clusters (0 for automatically estimating by the Louvain algorithm on the pretrained latent features).
 
 ## <a name="parameters"></a>Parameters
 
