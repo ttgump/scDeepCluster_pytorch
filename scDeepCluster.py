@@ -29,6 +29,7 @@ class scDeepCluster(nn.Module):
     def __init__(self, input_dim, z_dim, encodeLayer=[], decodeLayer=[], 
             activation="relu", sigma=1., alpha=1., gamma=1., device="cuda"):
         super(scDeepCluster, self).__init__()
+        torch.set_default_dtype(torch.float64)
         self.z_dim = z_dim
         self.activation = activation
         self.sigma = sigma
@@ -143,9 +144,9 @@ class scDeepCluster(nn.Module):
         '''X: tensor data'''
         self.train()
         print("Clustering stage")
-        X = torch.tensor(X, dtype=torch.float32)
-        X_raw = torch.tensor(X_raw, dtype=torch.float32)
-        size_factor = torch.tensor(size_factor, dtype=torch.float32)
+        X = torch.tensor(X, dtype=torch.float64)
+        X_raw = torch.tensor(X_raw, dtype=torch.float64)
+        size_factor = torch.tensor(size_factor, dtype=torch.float64)
         self.mu = Parameter(torch.Tensor(n_clusters, self.z_dim).to(self.device))
         optimizer = optim.Adadelta(filter(lambda p: p.requires_grad, self.parameters()), lr=lr, rho=.95)
 
@@ -155,9 +156,9 @@ class scDeepCluster(nn.Module):
             data = self.encodeBatch(X)
             self.y_pred = kmeans.fit_predict(data.data.cpu().numpy())
             self.y_pred_last = self.y_pred
-            self.mu.data.copy_(torch.tensor(kmeans.cluster_centers_, dtype=torch.float32))
+            self.mu.data.copy_(torch.tensor(kmeans.cluster_centers_, dtype=torch.float64))
         else:
-            self.mu.data.copy_(torch.tensor(init_centroid, dtype=torch.float32))
+            self.mu.data.copy_(torch.tensor(init_centroid, dtype=torch.float64))
             self.y_pred = y_pred_init
             self.y_pred_last = self.y_pred
         if y is not None:

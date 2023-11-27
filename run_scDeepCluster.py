@@ -62,7 +62,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data_mat = h5py.File(args.data_file, 'r')
-    x = np.array(data_mat['X'])
+    x = np.array(data_mat['X']).astype('float64')
     # y is the ground truth labels for evaluating clustering performance
     # If not existing, we skip calculating the clustering performance metrics (e.g. NMI ARI)
     if 'Y' in data_mat:
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         x = x[:, importantGenes]
 
     # preprocessing scRNA-seq read counts matrix
-    adata = sc.AnnData(x)
+    adata = sc.AnnData(x, dtype="float64")
     if y is not None:
         adata.obs['Group'] = y
 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                     y_pred_init=None, y=y, batch_size=args.batch_size, num_epochs=args.maxiter, update_interval=args.update_interval, tol=args.tol, save_dir=args.save_dir)
     else:
         ### estimate number of clusters by Louvain algorithm on the autoencoder latent representations
-        pretrain_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32)).cpu().numpy()
+        pretrain_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float64)).cpu().numpy()
         adata_latent = sc.AnnData(pretrain_latent)
         sc.pp.neighbors(adata_latent, n_neighbors=args.knn, use_rep="X")
         sc.tl.louvain(adata_latent, resolution=args.resolution)
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         ari = np.round(metrics.adjusted_rand_score(y, y_pred), 5)
         print('Evaluating cells: NMI= %.4f, ARI= %.4f' % (nmi, ari))
 
-    final_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float32)).cpu().numpy()
+    final_latent = model.encodeBatch(torch.tensor(adata.X, dtype=torch.float64)).cpu().numpy()
     np.savetxt(args.final_latent_file, final_latent, delimiter=",")
     np.savetxt(args.predict_label_file, y_pred, delimiter=",", fmt="%i")
 
