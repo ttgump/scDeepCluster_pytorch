@@ -7,6 +7,10 @@ Comparing to the original Keras version, I introduced two new features:<br/>
 1. The Louvain clustering is implemented after pretraining to allow estimating number of clusters.<br/>
 2. A new script "scDeepClusterBatch" uses conditional autoencoder technic to integrate single-cell data from different batches.<br/>
 
+**updates:
+
+11/27/2023: I updated the model to use float64 precision.
+
 ## Table of contents
 - [Network diagram](#diagram)
 - [Requirements](#requirements)
