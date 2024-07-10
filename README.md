@@ -80,4 +80,4 @@ Online app website: https://app.superbio.ai/apps/107
 
 ## <a name="contact"></a>Contact
 
-Tian Tian tt72@njit.edu
+Tian Tian tiantianwhu@163.com
